@@ -2,13 +2,21 @@ package game;
 
 import character.CharacterClass;
 import command.Command;
-import utils.InputValidator;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import utils.InputValidator;
+import world.Direction;
+import world.Room;
+import world.RoomType;
 
 public class Game {
     private final Scanner scanner;
     private final GameController controller;
+    private static final int ROOMS_BEFORE_BOSS = 7;
+    private static final int ROOMS_BEFORE_MINIBOSS = 2;
+    private Room currentRoom;
+    private List<Room> allRooms;
 
     private boolean isGameRunning;
     private String playerName;
@@ -18,14 +26,61 @@ public class Game {
         this.scanner = new Scanner(System.in);
         this.controller = new GameController(this);
         this.isGameRunning = false;
+        this.allRooms = new ArrayList<>();
     }
 
     public void start() {
         showIntroduction();
         createCharacter();
+        generateRooms();
         gameLoop();
     }
 
+    private void generateRooms() {
+        allRooms = new ArrayList<>();
+
+        currentRoom = new Room(RoomType.HOME);
+        allRooms.add(currentRoom);
+
+        for (int i = 0; i < ROOMS_BEFORE_BOSS; i++) {
+            Room newRoom = new Room(RoomType.NORMAL);
+            if (i == ROOMS_BEFORE_MINIBOSS) {
+                newRoom = new Room(RoomType.MINI_BOSS);
+            }
+            allRooms.add(newRoom);
+        }
+
+        Room bossRoom = new Room(RoomType.BOSS);
+        allRooms.add(bossRoom);
+
+        // Connect rooms (we'll implement this next)
+        connectRooms();
+    }
+
+    private void connectRooms() {
+        for (int i = 0; i < allRooms.size() - 1; i++) {
+            Room currentRoom = allRooms.get(i);
+            Room nextRoom = allRooms.get(i + 1);
+
+            if (Math.random() < 0.5) {
+                if (Math.random() < 0.5) {
+                    currentRoom.addExit(Direction.EAST, nextRoom);
+                    nextRoom.addExit(Direction.WEST, currentRoom);
+                } else {
+                    currentRoom.addExit(Direction.WEST, nextRoom);
+                    nextRoom.addExit(Direction.EAST, currentRoom);
+                }
+            } else {
+                if (Math.random() < 0.5) {
+                    currentRoom.addExit(Direction.NORTH, nextRoom);
+                    nextRoom.addExit(Direction.SOUTH, currentRoom);
+                } else {
+                    currentRoom.addExit(Direction.SOUTH, nextRoom);
+                    nextRoom.addExit(Direction.NORTH, currentRoom);
+                }
+            }
+        }
+    }
 
     private void showIntroduction() {
         System.out.println("\n=== Welcome to the VUB Game! ===");
@@ -126,4 +181,15 @@ public class Game {
         return playerClass;
     }
 
+    public Room getCurrentRoom() {
+        return currentRoom;
+    }
+
+    public void setCurrentRoom(Room currentRoom) {
+        this.currentRoom = currentRoom;
+    }
+
+    public List<Room> getAllRooms(){
+        return allRooms;
+    }
 }

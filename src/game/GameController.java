@@ -2,6 +2,7 @@ package game;
 
 import command.Command;
 import world.Direction;
+import world.Room;
 
 public class GameController {
     private final Game game;
@@ -58,8 +59,7 @@ public class GameController {
     }
 
     private void handleLook() {
-        // Will add actual room description later
-        System.out.println("You take a good look around...");
+        game.getCurrentRoom().describeRoom();
     }
 
     private void handleMove(String direction) {
@@ -73,8 +73,20 @@ public class GameController {
                     "I don't know that direction! Try north(n), south(s), east(e), or west(w)");
         }
 
-        // Will add actual movement later
-        System.out.println("You try to go " + dir.name().toLowerCase() + "...");
+        Room currentRoom = game.getCurrentRoom();
+        Room nextRoom = currentRoom.getExit(dir);
+
+        if (nextRoom == null) {
+            System.out.println("You can't go that way! There's no door there.");
+            return;
+        }
+
+        // Move to the new room
+        game.setCurrentRoom(nextRoom);
+
+        // Describe the new room
+        System.out.println("\nYou move " + dir.name().toLowerCase() + "...");
+        handleLook();
     }
 
     private void handleAttack(String target) {

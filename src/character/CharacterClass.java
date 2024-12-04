@@ -1,7 +1,7 @@
 package character;
 
 /**
- * Represents the available special classes a user can become.
+ * Represents the available special classes for both enemies and boss.
  * Each class has unique stats and abilities.
  */
 public enum CharacterClass {
