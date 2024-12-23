@@ -1,195 +1,231 @@
 package game;
 
-import character.CharacterClass;
-import command.Command;
-import java.util.ArrayList;
+import character.player.Player;
+import character.player.HeroClass;
+import command.CommandProcessor;
+import world.DungeonProgress;
+import world.Room;
+import world.generator.DungeonGeneration;
+
 import java.util.List;
 import java.util.Scanner;
-import utils.InputValidator;
-import world.Direction;
-import world.Room;
-import world.RoomType;
 
+/**
+ * The main class that runs the game.
+ * Controls how the game works and what players see.
+ */
 public class Game {
+    // Game messages
+    private static final String INTRO_MESSAGE =
+            "Welcome to the Labyrinth of VUB! \n" +
+                    "A dark force has taken over the land...\n" +
+                    "Only a brave hero can save us now!\n";
+
+    private static final String DUNGEON_INTRO =
+            "You notice a northern door in your home.\n" +
+                    "Beyond it lies the entrance to a dangerous dungeon.\n" +
+                    "Many have entered, few have returned...";
+
+    // Game state
     private final Scanner scanner;
-    private final GameController controller;
-    private static final int ROOMS_BEFORE_BOSS = 7;
-    private static final int ROOMS_BEFORE_MINIBOSS = 2;
+    private final CommandProcessor commandProcessor;
     private Room currentRoom;
+    private final DungeonProgress dungeonProgress;
     private List<Room> allRooms;
-
+    private Player player;
     private boolean isGameRunning;
-    private String playerName;
-    private CharacterClass playerClass;
 
-    public Game(){
+    /**
+     * Creates a new game instance and initializes core components.
+     */
+    public Game() {
         this.scanner = new Scanner(System.in);
-        this.controller = new GameController(this);
+        this.dungeonProgress = new DungeonProgress();
+        this.commandProcessor = new CommandProcessor(this);
         this.isGameRunning = false;
-        this.allRooms = new ArrayList<>();
     }
 
+    /**
+     * Starts the game and handles the main game flow.
+     */
     public void start() {
-        showIntroduction();
-        createCharacter();
-        generateRooms();
-        gameLoop();
-    }
-
-    private void generateRooms() {
-        allRooms = new ArrayList<>();
-
-        currentRoom = new Room(RoomType.HOME);
-        allRooms.add(currentRoom);
-
-        for (int i = 0; i < ROOMS_BEFORE_BOSS; i++) {
-            Room newRoom = new Room(RoomType.NORMAL);
-            if (i == ROOMS_BEFORE_MINIBOSS) {
-                newRoom = new Room(RoomType.MINI_BOSS);
-            }
-            allRooms.add(newRoom);
-        }
-
-        Room bossRoom = new Room(RoomType.BOSS);
-        allRooms.add(bossRoom);
-
-        // Connect rooms (we'll implement this next)
-        connectRooms();
-    }
-
-    private void connectRooms() {
-        for (int i = 0; i < allRooms.size() - 1; i++) {
-            Room currentRoom = allRooms.get(i);
-            Room nextRoom = allRooms.get(i + 1);
-
-            if (Math.random() < 0.5) {
-                if (Math.random() < 0.5) {
-                    currentRoom.addExit(Direction.EAST, nextRoom);
-                    nextRoom.addExit(Direction.WEST, currentRoom);
-                } else {
-                    currentRoom.addExit(Direction.WEST, nextRoom);
-                    nextRoom.addExit(Direction.EAST, currentRoom);
-                }
-            } else {
-                if (Math.random() < 0.5) {
-                    currentRoom.addExit(Direction.NORTH, nextRoom);
-                    nextRoom.addExit(Direction.SOUTH, currentRoom);
-                } else {
-                    currentRoom.addExit(Direction.SOUTH, nextRoom);
-                    nextRoom.addExit(Direction.NORTH, currentRoom);
-                }
-            }
+        try {
+            initializeGame();
+            runGameLoop();
+        } catch (Exception e) {
+            System.err.println("An unexpected error occurred: " + e.getMessage());
+        } finally {
+            cleanup();
         }
     }
 
-    private void showIntroduction() {
-        System.out.println("\n=== Welcome to the VUB Game! ===");
-        System.out.println("Hey there! Ready for an adventure?");
-        System.out.println("Bad things are happening in our world...");
-        System.out.println("We need a hero to save us!");
-        System.out.println("Could that hero be you?");
-        System.out.println("===========================\n");
+    /**
+     * Initializes all game components and displays introduction.
+     */
+    private void initializeGame() {
+        displayIntroduction();
+        createPlayerCharacter();
+        generateDungeonLayout();
     }
 
-    private void createCharacter() {
-        while (playerName == null || playerName.trim().isEmpty()) {
-            System.out.print("First things first - what's your name? ");
-            try{
-                String input = scanner.nextLine();
-                String validatedName = InputValidator.validateInput(input);
-                if(validatedName.length() < 2){
-                    System.out.println("Your name needs to be longer than that!");
-                    continue;
-                }
-                playerName = validatedName;
+    /**
+     * Displays the game's introduction message.
+     */
+    private void displayIntroduction() {
+        System.out.printf(INTRO_MESSAGE);
+    }
 
-            } catch (IllegalArgumentException e){
-                System.out.println("Oops! " + e.getMessage());
-            }
+    /**
+     * Creates the player character by getting user input.
+     */
+    private void createPlayerCharacter() {
+        Scanner scanner = new Scanner(System.in);
+        String name;
+        HeroClass selectedClass = null;
+
+        // Get player name
+        System.out.print("\nEnter your character's name: ");
+        name = scanner.nextLine().trim();
+        while (name.isEmpty()) {
+            System.out.print("Name cannot be empty. Try again: ");
+            name = scanner.nextLine().trim();
         }
 
-        // Get player class
-        while (playerClass == null) {
-            System.out.println("\nNow, pick what kind of hero you want to be:");
-            System.out.println("(Each hero is good at different things!)\n");
-
-            for (CharacterClass c : CharacterClass.values()) {
-                System.out.printf("• %s - %s%n", c.getName(), c.getDescription());
-                System.out.printf("  Health: %d (how much damage you can take)%n", c.getBaseHealth());
-                System.out.printf("  Damage: %d (how hard you hit)%n", c.getBaseDamage());
-                System.out.println(); // Empty line between classes
+        // Select character class
+        while (selectedClass == null) {
+            System.out.println("\nChoose your class:");
+            for (HeroClass heroClass : HeroClass.values()) {
+                System.out.printf("%s - %s%n",
+                        heroClass.getName(),
+                        heroClass.getDescription());
             }
 
-            System.out.print("Which one do you like? Just type the name > ");
+            String choice = scanner.nextLine().trim();
             try {
-                String input = scanner.nextLine();
-                String validatedInput = InputValidator.validateInput(input);
-                playerClass = CharacterClass.fromString(validatedInput);
-                if (playerClass == null) {
-                    System.out.println("Sorry, that's not one of the choices. Try again!");
-                }
+                selectedClass = HeroClass.valueOf(choice.toUpperCase());
             } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
+                System.out.println("Invalid class. Please try again.");
             }
         }
 
-        System.out.printf("\nAwesome! You are now %s the %s!%n",
-                playerName, playerClass.getName());
+        // Replace this line:
+        // player = new Player(name, selectedClass.getBaseHealth(), selectedClass.getBaseDamage());
+        // With this:
+        player = new Player(name, selectedClass);
+
+        displayWelcomeMessage();
+    }
+
+    /**
+     * Displays welcome message after character creation.
+     */
+    private void displayWelcomeMessage() {
+        System.out.printf("\nWelcome, %s the %s!%n",
+                player.getCharacterName(),
+                player.getHeroClass().getName());
         System.out.println("Your adventure is about to begin...");
-        System.out.println("(If you need help, just type 'help')\n");
+        System.out.println("(Type 'help' if you need assistance)\n");
+        System.out.println(DUNGEON_INTRO);
     }
 
-    private void gameLoop(){
+    /**
+     * Generates the dungeon layout using the dungeon generator.
+     */
+    private void generateDungeonLayout() {
+        DungeonGeneration generator = new DungeonGeneration(dungeonProgress);
+        Room startingRoom = generator.createStartingArea();
+        this.currentRoom = startingRoom;
+    }
+
+
+    /**
+     * Main game loop that handles player input and game state updates.
+     * Continues until the player dies or exits the game.
+     */
+    private void runGameLoop() {
         isGameRunning = true;
-
-        while (isGameRunning) {
-            System.out.println(" Tell me man, what do you want to do? ");
-            String input = scanner.nextLine();
-
+        while (isGameRunning && player.isAlive()) {
             try {
-                String cleanInput = InputValidator.validateInput(input);
-                String[] parts = cleanInput.split("\\s+", 2);
-
-                Command command = Command.fromString(parts[0]);
-                if (command == null) {
-                    System.out.println("I don't know that command!");
-                    System.out.println("Type 'help' to see what you can do.");
-                    continue;
-                }
-
-                String argument = parts.length > 1 ? parts[1] : "";
-                controller.handleCommand(command, argument);
-
-            }catch(IllegalArgumentException e){
-                System.out.println(e.getMessage());
+                promptAction();
+                String input = getValidatedInput();
+                processCommand(input);
+            } catch (Exception e) {
+                System.out.println("Invalid input: " + e.getMessage());
             }
+        }
+        handleGameEnd();
+    }
+
+    /**
+     * Gets and validates user input.
+     * @return validated user input
+     * @throws IllegalArgumentException if input is invalid
+     */
+    private String getValidatedInput() {
+        String input = scanner.nextLine().trim().toLowerCase();
+        if (input.isEmpty()) {
+            throw new IllegalArgumentException("Input cannot be empty");
+        }
+        return input;
+    }
+
+    /**
+     * Processes a player command.
+     * @param input the player's input command
+     */
+    private void processCommand(String input) {
+        isGameRunning = commandProcessor.processInput(input);
+    }
+
+    /**
+     * Prompts the player for their next action.
+     */
+    private void promptAction() {
+        System.out.println("\nWhat would you like to do?");
+    }
+
+    /**
+     * Handles the end of the game, displaying appropriate messages.
+     */
+    private void handleGameEnd() {
+        if (!player.isAlive()) {
+            System.out.println("Game Over! You have been defeated...");
+        } else {
+            System.out.println("Thanks for playing! Goodbye.");
         }
     }
 
-
-
-
-    public void setIsGameRunning(boolean gameRunning) {
-        this.isGameRunning = gameRunning;
+    /**
+     * Cleans up resources when the game ends.
+     */
+    private void cleanup() {
+        if (scanner != null) {
+            scanner.close();
+        }
     }
 
-    public String getPlayerName() {
-        return playerName;
-    }
-
-    public CharacterClass getPlayerClass() {
-        return playerClass;
-    }
-
+    // Getters and setters
     public Room getCurrentRoom() {
         return currentRoom;
     }
 
-    public void setCurrentRoom(Room currentRoom) {
-        this.currentRoom = currentRoom;
+    public void setCurrentRoom(Room room) {
+        this.currentRoom = room;
     }
 
-    public List<Room> getAllRooms(){
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setGameRunning(boolean running) {
+        this.isGameRunning = running;
+    }
+
+    public List<Room> getAllRooms() {
         return allRooms;
+    }
+
+    public DungeonProgress getDungeonProgress() {
+        return dungeonProgress;
     }
 }

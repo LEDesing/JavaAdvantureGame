@@ -1,7 +1,7 @@
 package command;
 
 /**
- * Available game commands.
+ * All the commands you can use in the game.
  */
 
 public enum Command {
@@ -12,7 +12,9 @@ public enum Command {
     USE("use", "Use an item", "use potion"),
     INVENTORY("inventory", "Check your inventory", "inventory"),
     HELP("help", "Show available commands", "help"),
+    DROP("drop", "Drop an item from inventory", "drop sword"),
     QUIT("quit", "Exit the game", "quit");
+
 
     private final String name;
     private final String description;
@@ -29,9 +31,10 @@ public enum Command {
     public String getExample() { return example; }
 
     /**
-     * Converts input to a Command. We convert to lowercase and trim space
-     * @return Command if valid, null if not
+     * Find a command from user input.
+     * Ex: "move" returns Command.MOVE
      */
+
     public static Command fromString(String input) {
         if (input == null || input.isEmpty()) return null;
 

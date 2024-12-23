@@ -1,10 +1,24 @@
 import game.Game;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+/**
+ * Main entry point for the Labyrinth of VUB game.
+ * This class initializes and starts the game session.
+ */
 public class Main {
+
+    /**
+     * Main method that starts the game.
+     * Handles any unexpected errors during gameplay.
+     *
+     * @param args Command line arguments (not used)
+     */
+
     public static void main(String[] args) {
-        Game game = new Game();
-        game.start();
+        try{
+            Game game  = new Game();
+            game.start();
+        } catch(Exception e){
+            System.out.println("Error message : " + e.getMessage());
+        }
     }
 }
