@@ -1,44 +1,48 @@
 package command;
 
-import character.enemy.Enemy;
 import character.player.Player;
-import combat.CombatResult;
 import combat.CombatSystem;
 import game.Game;
-import items.Inventory;
 import items.Item;
 import utils.UserInput;
 import world.Direction;
 import world.Room;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
- * Handles what players type and makes the game do things.
- * Makes sure commands work and tells players if something goes wrong.
+ * Processes and executes player commands in the game.
+ * This class handles all user input and converts it into game actions.
+ * It ensures commands are valid and provides feedback to the player.
+ *
+ * @since 11.0
  */
 public class CommandProcessor {
+    /** Main game instance */
     private final Game game;
-    private Set<Enemy> engagedEnemies = new HashSet<>();
 
-    // Simple messages for players
+    /** Combat system for handling battles */
+    private final CombatSystem combatSystem;
+
+    /** Messages shown to players when certain actions fail */
     private static final String INVALID_DIRECTION_MSG = "Try: north (n) or south (s)";
     private static final String ENEMIES_PRESENT_MSG = "You can't run away while enemies are here!";
     private static final String NO_EXIT_MSG = "You can't go that way!";
+    private static final String EMPTY_INVENTORY_MSG = "There are no items in your inventory.";
 
     /**
-     * Makes a new command handler
-     * @param game The game to handle commands for
+     * Creates a new command processor
+     * @param game The main game instance
      */
     public CommandProcessor(Game game) {
         this.game = game;
+        this.combatSystem = new CombatSystem();
     }
 
     /**
-     * Takes what player typed and does the right action
-     * @param rawInput What the player typed
-     * @return false if player wants to quit, true if not
+     * Takes player input and performs the matching game action.
+     * Handles invalid input by showing helpful error messages.
+     *
+     * @param rawInput The text that the player typed
+     * @return true if the game should continue, false if the player wants to quit
      */
     public boolean processInput(String rawInput) {
         try {
@@ -51,11 +55,7 @@ public class CommandProcessor {
                 return true;
             }
 
-            String argument = "";
-            if (parts.length > 1) {
-                argument = parts[1];
-            }
-
+            String argument = parts.length > 1 ? parts[1] : "";
             return executeCommand(command, argument);
 
         } catch (IllegalArgumentException e) {
@@ -65,10 +65,10 @@ public class CommandProcessor {
     }
 
     /**
-     * Does what the command says
-     * @param command Which command to do
+     * Executes the given command with its argument
+     * @param command Which command to execute
      * @param argument Extra information for the command
-     * @return false if game should end, true if not
+     * @return false if game should end, true otherwise
      */
     private boolean executeCommand(Command command, String argument) {
         switch (command) {
@@ -79,36 +79,38 @@ public class CommandProcessor {
                 handleLook();
                 break;
             case ATTACK:
-                handleAttack(argument);
+                combatSystem.handleAttack(game.getPlayer(), game.getCurrentRoom(), argument);
                 break;
             case TAKE:
                 handleTake(argument);
-                handlePostActionCombat();
+                combatSystem.handlePostAction(game.getPlayer(), game.getCurrentRoom());
                 break;
             case USE:
                 handleUse(argument);
-                handlePostActionCombat();
+                combatSystem.handlePostAction(game.getPlayer(), game.getCurrentRoom());
+                break;
+            case ABILITY:
+                combatSystem.handleAbility(game.getPlayer(), game.getCurrentRoom());
                 break;
             case INVENTORY:
                 handleInventory();
-                handlePostActionCombat();
-                break;
-            case HELP:
-                handleHelp();
-                handlePostActionCombat();
+                combatSystem.handlePostAction(game.getPlayer(), game.getCurrentRoom());
                 break;
             case DROP:
                 handleDrop(argument);
-                handlePostActionCombat();
+                combatSystem.handlePostAction(game.getPlayer(), game.getCurrentRoom());
                 break;
             case QUIT:
                 return handleQuit();
+            default:
+                System.out.println("Command not implemented yet!");
         }
         return true;
     }
 
     /**
-     * Tries to move the player in a direction
+     * Handles player movement in a direction
+     * @param direction The direction to move in
      */
     private void handleMove(String direction) {
         if (direction.isEmpty()) {
@@ -117,25 +119,22 @@ public class CommandProcessor {
         }
 
         try {
-            String cleanDirection = UserInput.clean(direction);
-            Direction dir = Direction.fromString(cleanDirection);
-
+            Direction dir = Direction.fromString(UserInput.clean(direction));
             if (dir == null) {
-                System.out.println("That's not a valid direction!");
-                System.out.println(INVALID_DIRECTION_MSG);
+                System.out.println("That's not a valid direction!\n" + INVALID_DIRECTION_MSG);
                 return;
             }
 
-            Room currentRoom = game.getCurrentRoom();
-            checkAndMove(currentRoom, dir);
-
+            checkAndMove(game.getCurrentRoom(), dir);
         } catch (IllegalArgumentException e) {
-            System.out.println("Oops: " + e.getMessage());
+            System.out.println("Invalid direction: " + e.getMessage());
         }
     }
 
     /**
-     * Checks if movement is possible and moves player
+     * Validates and executes movement to a new room
+     * @param currentRoom The room the player is currently in
+     * @param dir Direction to move in
      */
     private void checkAndMove(Room currentRoom, Direction dir) {
         if (!currentRoom.hasExit(dir)) {
@@ -148,109 +147,39 @@ public class CommandProcessor {
             return;
         }
 
-        Room nextRoom = currentRoom.getExit(dir);
-        game.setCurrentRoom(nextRoom);
-        engagedEnemies.clear(); // Clear engaged enemies when moving rooms
+        // Move to new room and look around
+        game.setCurrentRoom(currentRoom.getExit(dir));
         handleLook();
     }
 
     /**
-     * Shows what's in the room
+     * Shows the current room description
      */
     private void handleLook() {
-        Room currentRoom = game.getCurrentRoom();
-        currentRoom.describeRoom();
+        game.getCurrentRoom().describeRoom();
     }
 
     /**
-     * Handles fighting with enemies
-     */
-    private void handleAttack(String targetName) {
-        if (targetName.isEmpty()) {
-            System.out.println("Attack what? Type 'attack' and the enemy's name!");
-            CommandSuggester.suggestAvailableCommands(game.getCurrentRoom(), game.getPlayer());
-            return;
-        }
-
-        Room currentRoom = game.getCurrentRoom();
-        Enemy enemy = currentRoom.findEnemy(targetName);
-
-        if (enemy == null) {
-            System.out.println("There's no " + targetName + " here to attack!");
-            return;
-        }
-
-        // Add enemy to engaged set when attacked
-        engagedEnemies.add(enemy);
-
-        CombatResult result = CombatSystem.executeCombatRound(game.getPlayer(), enemy);
-        result.getCombatLog().display();
-
-        if (result.isEnemyDefeated()) {
-            handleEnemyDefeat(enemy);
-            engagedEnemies.remove(enemy);  // Remove defeated enemy from engaged set
-        }
-    }
-
-    /**
-     * Handles what happens when an enemy dies
-     */
-    private void handleEnemyDefeat(Enemy enemy) {
-        Room currentRoom = game.getCurrentRoom();
-        currentRoom.removeEnemy(enemy);
-
-        String enemyName = enemy.getCharacterName();
-        System.out.println("You defeated the " + enemyName + "!");
-
-        if (currentRoom.getEnemies().isEmpty()) {
-            System.out.println("Room cleared!");
-            currentRoom.setCleared(true);
-        }
-    }
-
-    private void handlePostActionCombat() {
-        Room currentRoom = game.getCurrentRoom();
-
-        // Only proceed if there are enemies in the room and we're engaged with some
-        if (!currentRoom.getEnemies().isEmpty() && !engagedEnemies.isEmpty()) {
-            Player player = game.getPlayer();
-
-            // Let each engaged enemy take their turn
-            for (Enemy enemy : engagedEnemies) {
-                if (enemy.isAlive()) {
-                    enemy.takeTurn(player);
-
-                    // Check if player died
-                    if (!player.isAlive()) {
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Tries to pick up an item
+     * Handles picking up items from the current room
+     * @param itemName Name of item to take
      */
     private void handleTake(String itemName) {
         if (itemName.isEmpty()) {
             System.out.println("Take what? Type 'take' and the item's name!");
-            showTakeableItems(game.getCurrentRoom());
+            showTakeableItems();
             return;
         }
 
         Room currentRoom = game.getCurrentRoom();
         Player player = game.getPlayer();
-
         Item item = currentRoom.removeItem(itemName);
 
         if (item != null) {
-            boolean added = player.addToInventory(item);
-            if (!added) {
+            if (player.addToInventory(item)) {
+                System.out.println("You picked up the " + itemName);
+            } else {
                 currentRoom.addItem(item);
                 System.out.println("Your inventory is full!");
-            } else {
-                System.out.println("You picked up the " + itemName);
             }
         } else {
             System.out.println("There's no " + itemName + " here to take!");
@@ -258,22 +187,23 @@ public class CommandProcessor {
     }
 
     /**
-     * Shows available items to take in the current room
+     * Shows items available to take in current room
      */
-    private void showTakeableItems(Room room) {
-        if (room.getItems().isEmpty()) {
+    private void showTakeableItems() {
+        Room currentRoom = game.getCurrentRoom();
+        if (currentRoom.getItems().isEmpty()) {
             System.out.println("There are no items here to take.");
             return;
         }
 
         System.out.println("\nItems you can take:");
-        for (Item item : room.getItems()) {
-            System.out.printf("- %s: %s%n", item.getName(), item.getDescription());
-        }
+        currentRoom.getItems().forEach(item ->
+                System.out.printf("- %s: %s%n", item.getName(), item.getDescription()));
     }
 
     /**
-     * Tries to drop an item
+     * Handles dropping items from inventory
+     * @param itemName Name of item to drop
      */
     private void handleDrop(String itemName) {
         if (itemName.isEmpty()) {
@@ -282,12 +212,10 @@ public class CommandProcessor {
         }
 
         Player player = game.getPlayer();
-        Room currentRoom = game.getCurrentRoom();
-
         Item item = player.removeFromInventory(itemName);
 
         if (item != null) {
-            currentRoom.addItem(item);
+            game.getCurrentRoom().addItem(item);
             System.out.println("You dropped the " + itemName);
         } else {
             System.out.println("You don't have a " + itemName + " to drop!");
@@ -295,62 +223,44 @@ public class CommandProcessor {
     }
 
     /**
-     * Tries to use an item
+     * Handles using items from inventory
+     * @param itemName Name of item to use
      */
     private void handleUse(String itemName) {
         if (itemName.isEmpty()) {
-            System.out.println("Use what? Type 'use' and the item's name!");
-
-            // Show available items
-            Player player = game.getPlayer();
-            Inventory inventory = player.getInventory();
-            System.out.println("\nAvailable items in your inventory:");
-            inventory.showContents();
+            showInventoryContents("Use what? Type 'use' and the item's name!");
             return;
         }
 
-        Player player = game.getPlayer();
-        boolean used = player.useItem(itemName);
-
-        if (!used) {
-            System.out.println("You don't have a " + itemName + " to use!");
-            // Show available items here too
-            System.out.println("\nAvailable items in your inventory:");
-            player.getInventory().showContents();
+        if (!game.getPlayer().useItem(itemName)) {
+            showInventoryContents("You don't have a " + itemName + " to use!");
         }
     }
 
     /**
-     * Shows what the player is carrying
+     * Shows the player's inventory contents
      */
     private void handleInventory() {
-        Player player = game.getPlayer();
-        Inventory inventory = player.getInventory();
-        inventory.showContents();
+        showInventoryContents(null);
     }
 
     /**
-     * Shows all commands the player can use
+     * Displays inventory contents with optional message
+     * @param message Optional message to display before contents
      */
-    private void handleHelp() {
-        System.out.println("\nHere's what you can do:");
-        for (Command cmd : Command.values()) {
-            String name = cmd.getName();
-            String description = cmd.getDescription();
-            String example = cmd.getExample();
-
-            System.out.printf("• %s - %s%n  Example: %s%n%n",
-                    name,
-                    description,
-                    example);
+    private void showInventoryContents(String message) {
+        if (message != null) {
+            System.out.println(message);
         }
+        System.out.println("\nAvailable items in your inventory:");
+        game.getPlayer().getInventory().showContents();
     }
 
     /**
-     * Ends the game
+     * Handles quitting the game
+     * @return false to indicate game should end
      */
     private boolean handleQuit() {
-        System.out.println("Thanks for playing! Goodbye!");
         game.setGameRunning(false);
         return false;
     }

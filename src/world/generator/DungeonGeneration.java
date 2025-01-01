@@ -1,3 +1,4 @@
+// DungeonGeneration.java
 package world.generator;
 
 import character.enemy.Enemy;
@@ -32,20 +33,17 @@ public class DungeonGeneration {
     }
 
     /**
-     * Creates the starting area of the dungeon
-     * @return The starting room (home)
+     * Creates the starting area of the dungeon.
+     * @return The starting room (home).
      */
     public Room createStartingArea() {
-        // Create rooms
         Room home = new Room(RoomType.HOME);
         Room entrance = new Room(RoomType.ENTRANCE);
-        Room firstDungeonRoom = generateNextRoom();  // Create first dungeon room
+        Room firstDungeonRoom = generateNextRoom();
 
-        // Connect the rooms in sequence
         connectRooms(home, entrance, Direction.NORTH);
         connectRooms(entrance, firstDungeonRoom, Direction.NORTH);
 
-        // Add starter items to entrance
         entrance.addItem(new Item(
                 ItemsType.HEALTH_POTION.getDisplayName(ItemsType.HEALTH_POTION.getBasicPower()),
                 ItemsType.HEALTH_POTION,
@@ -58,13 +56,21 @@ public class DungeonGeneration {
     }
 
     /**
-     * Makes a new room when player goes deeper
+     * Creates a new room when player goes deeper.
      */
     public Room generateNextRoom() {
         try {
             RoomType type = determineNextRoomType();
             Room room = new Room(type);
             populateRoom(room);
+
+            // If this is a treasure room, we should still allow forward progress
+            if (type == RoomType.TREASURE) {
+                Room nextRoom = new Room(RoomType.NORMAL);
+                populateRoom(nextRoom);
+                connectRooms(room, nextRoom, Direction.NORTH);
+            }
+
             lastGeneratedRoom = room;
             return room;
         } catch (Exception e) {
@@ -74,60 +80,59 @@ public class DungeonGeneration {
     }
 
     /**
-     * Connects a new room to the north of the current room
-     * @param currentRoom The room the player is currently in
-     * @return The newly connected room
+     * Connects a new room to the north of the current room.
+     * @param currentRoom The room the player is currently in.
+     * @return The newly connected room.
      */
     public Room connectNewRoomNorth(Room currentRoom) {
         if (currentRoom == null) {
             throw new IllegalArgumentException("Current room cannot be null");
         }
 
-        // If the room is cleared and has no north exit, generate new room
-        if (currentRoom.isCleared() && !currentRoom.hasExit(Direction.NORTH)) {
+        // If room already has a north exit, use that
+        if (currentRoom.hasExit(Direction.NORTH)) {
+            return currentRoom.getExit(Direction.NORTH);
+        }
+
+        // Only generate new room if current room is cleared
+        if (currentRoom.isCleared()) {
             Room newRoom = generateNextRoom();
             connectRooms(currentRoom, newRoom, Direction.NORTH);
             return newRoom;
         }
 
-        // If there's already a north exit, use it
-        return currentRoom.getExit(Direction.NORTH);
+        return null;
     }
 
     /**
-     * Decides what type the next room should be
+     * Decides what type the next room should be.
      */
     private RoomType determineNextRoomType() {
-        // Check for boss rooms first
         if (progress.canSpawnFinalBoss()) {
-            return RoomType.BOSS;        // Shadow Lord room
+            return RoomType.BOSS;
         }
         if (progress.canSpawnSecondBoss()) {
-            return RoomType.BOSS;        // Frost Sentinel room
+            return RoomType.BOSS;
         }
         if (progress.canSpawnFirstBoss()) {
-            return RoomType.BOSS;        // Flame Warden room
+            return RoomType.BOSS;
         }
 
-        // Maybe make a treasure room
         if (random.nextDouble() < TREASURE_ROOM_CHANCE) {
             return RoomType.TREASURE;
         }
 
-        // Default to normal dungeon room
         return RoomType.NORMAL;
     }
 
     /**
-     * Adds enemies and items to a room
+     * Adds enemies and items to a room.
      */
     private void populateRoom(Room room) {
         switch (room.getType()) {
             case HOME:
-                // Home is safe, no enemies
                 break;
             case ENTRANCE:
-                // Entrance just has starter items (already added in createStartingArea)
                 break;
             case TREASURE:
                 addTreasureToRoom(room);
@@ -145,7 +150,7 @@ public class DungeonGeneration {
     }
 
     /**
-     * Adds a boss enemy based on progress
+     * Adds a boss enemy based on progress.
      */
     private void addBossToRoom(Room room) {
         Enemy boss;
@@ -158,39 +163,36 @@ public class DungeonGeneration {
         }
         room.addEnemy(boss);
 
-        // Bosses always drop good items
         addTreasureToRoom(room);
     }
 
     /**
-     * Adds valuable items to a room
+     * Adds valuable items to a room.
      */
     private void addTreasureToRoom(Room room) {
-        // Always add at least one good item
         room.addItem(generateValuableItem());
 
-        // Maybe add a second item
         if (random.nextDouble() < ITEM_SPAWN_CHANCE) {
             room.addItem(generateValuableItem());
         }
     }
 
     /**
-     * Adds normal enemies to a room
+     * Adds normal enemies to a room.
      */
     private void addRegularEnemies(Room room) {
         int enemyCount = random.nextInt(MAX_ENEMIES_PER_ROOM) + 1;
 
         for (int i = 0; i < enemyCount; i++) {
             EnemyType type = getRandomEnemyType();
-            String enemyName = type.getName() + " " + (i + 1);  // Number enemies for clarity
+            String enemyName = type.getName() + " " + (i + 1);
             Enemy enemy = new Enemy(enemyName, type, false);
             room.addEnemy(enemy);
         }
     }
 
     /**
-     * Adds random items to a room
+     * Adds random items to a room.
      */
     private void addRandomItems(Room room) {
         int itemCount = random.nextInt(MAX_ITEMS_PER_ROOM + 1);
@@ -203,7 +205,7 @@ public class DungeonGeneration {
     }
 
     /**
-     * Creates a valuable item (for treasure/boss rooms)
+     * Creates a valuable item (for treasure/boss rooms).
      */
     private Item generateValuableItem() {
         ItemsType type = random.nextDouble() < 0.7 ?
@@ -218,7 +220,7 @@ public class DungeonGeneration {
     }
 
     /**
-     * Creates a random item
+     * Creates a random item.
      */
     private Item generateRandomItem() {
         ItemsType type = random.nextDouble() < 0.6 ?
@@ -233,7 +235,7 @@ public class DungeonGeneration {
     }
 
     /**
-     * Picks a random enemy type
+     * Picks a random enemy type.
      */
     private EnemyType getRandomEnemyType() {
         double roll = random.nextDouble();
@@ -242,12 +244,12 @@ public class DungeonGeneration {
         } else if (roll < 0.7) {
             return EnemyType.SKELETON;
         } else {
-            return EnemyType.WITCH;  // Add some variety
+            return EnemyType.WITCH;
         }
     }
 
     /**
-     * Connects two rooms together
+     * Connects two rooms together.
      */
     private void connectRooms(Room from, Room to, Direction dir) {
         if (from == null || to == null) {
@@ -258,10 +260,11 @@ public class DungeonGeneration {
     }
 
     /**
-     * Gets the last generated room
-     * @return The most recently generated room
+     * Gets the last generated room.
+     * @return The most recently generated room.
      */
     public Room getLastGeneratedRoom() {
         return lastGeneratedRoom;
     }
+
 }

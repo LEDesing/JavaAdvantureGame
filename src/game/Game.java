@@ -1,42 +1,52 @@
 package game;
 
-import character.player.Player;
+import character.ability.Ability;
 import character.player.HeroClass;
+import character.player.Player;
 import command.CommandProcessor;
+import java.util.List;
+import java.util.Scanner;
+import world.Direction;
 import world.DungeonProgress;
 import world.Room;
 import world.generator.DungeonGeneration;
 
-import java.util.List;
-import java.util.Scanner;
-
 /**
- * The main class that runs the game.
- * Controls how the game works and what players see.
+ * The main game controller that manages the game state and flow.
+ * This class handles:
+ * - Starting and ending the game
+ * - Creating the player character
+ * - Managing the game world
+ * - Processing player input
+ * - Tracking game progress
  */
 public class Game {
-    // Game messages
+    /** Text shown when the game starts */
     private static final String INTRO_MESSAGE =
             "Welcome to the Labyrinth of VUB! \n" +
                     "A dark force has taken over the land...\n" +
                     "Only a brave hero can save us now!\n";
 
+    /** Text shown when entering the dungeon */
     private static final String DUNGEON_INTRO =
             "You notice a northern door in your home.\n" +
                     "Beyond it lies the entrance to a dangerous dungeon.\n" +
                     "Many have entered, few have returned...";
 
-    // Game state
+    /** Core game components */
     private final Scanner scanner;
     private final CommandProcessor commandProcessor;
-    private Room currentRoom;
     private final DungeonProgress dungeonProgress;
+    
+    /** Game state tracking */
+    private Room currentRoom;
     private List<Room> allRooms;
     private Player player;
     private boolean isGameRunning;
 
     /**
-     * Creates a new game instance and initializes core components.
+     * Creates a new game instance and sets up the basic components.
+     * This includes the command processor, scanner for input, and dungeon progress tracker.
      */
     public Game() {
         this.scanner = new Scanner(System.in);
@@ -46,7 +56,13 @@ public class Game {
     }
 
     /**
-     * Starts the game and handles the main game flow.
+     * Starts the game and manages the main game loop.
+     * This method:
+     * - Shows the introduction
+     * - Creates the player character
+     * - Generates the game world
+     * - Runs the main game loop
+     * - Handles cleanup when the game ends
      */
     public void start() {
         try {
@@ -92,29 +108,28 @@ public class Game {
         }
 
         // Select character class
-        while (selectedClass == null) {
-            System.out.println("\nChoose your class:");
-            for (HeroClass heroClass : HeroClass.values()) {
-                System.out.printf("%s - %s%n",
-                        heroClass.getName(),
-                        heroClass.getDescription());
-            }
+        System.out.println("\nChoose your class:");
+        for (HeroClass heroClass : HeroClass.values()) {
+            System.out.printf("%s - %s%n",
+                    heroClass.getName(),
+                    heroClass.getDescription());
+        }
 
+        while (selectedClass == null) {
+            System.out.print("\nI'd like to pick: ");
             String choice = scanner.nextLine().trim();
             try {
                 selectedClass = HeroClass.valueOf(choice.toUpperCase());
+                System.out.printf("\nYou have chosen the path of the %s!%n", selectedClass.getName());
             } catch (IllegalArgumentException e) {
                 System.out.println("Invalid class. Please try again.");
             }
         }
 
-        // Replace this line:
-        // player = new Player(name, selectedClass.getBaseHealth(), selectedClass.getBaseDamage());
-        // With this:
         player = new Player(name, selectedClass);
-
         displayWelcomeMessage();
     }
+
 
     /**
      * Displays welcome message after character creation.
@@ -124,8 +139,9 @@ public class Game {
                 player.getCharacterName(),
                 player.getHeroClass().getName());
         System.out.println("Your adventure is about to begin...");
-        System.out.println("(Type 'help' if you need assistance)\n");
         System.out.println(DUNGEON_INTRO);
+        displayAvailableCommands(true);
+        System.out.println("\nWhat would you like to do?"); // Move this here
     }
 
     /**
@@ -139,15 +155,61 @@ public class Game {
 
 
     /**
+     * Shows the player what commands they can use right now.
+     * Different commands are shown based on where the player is and what's in the room.
+     *
+     * @param isInitial true if player is in starting room, false otherwise
+     */
+    private void displayAvailableCommands(boolean isInitial) {
+        System.out.println("\nAvailable commands:");
+
+        if (isInitial) {
+            // Initial commands only
+            System.out.println("- move north    : Enter the dungeon");
+        } else {
+            // Movement commands
+            for (Direction dir : currentRoom.getExits().keySet()) {
+                System.out.printf("- move %-8s: Move to next room%n", dir.name().toLowerCase());
+            }
+
+            // Contextual commands
+            if (currentRoom.hasEnemies()) {
+                System.out.println("- attack <name> : Attack an enemy");
+
+                // Show ability info with cooldown
+                Ability ability = player.getSpecialAbility();
+                String cooldownInfo = ability.getCurrentCooldown() > 0 ?
+                        String.format(" (Cooldown: %d)", ability.getCurrentCooldown()) : "";
+                System.out.printf("- ability      : %s - %s%s%n",
+                        ability.getName(),
+                        ability.getDescription(),
+                        cooldownInfo);
+            }
+            if (currentRoom.hasItems()) {
+                System.out.println("- take <item>   : Pick up an item");
+            }
+        }
+
+        // Always available commands
+        System.out.println("- look          : Examine your surroundings");
+        System.out.println("- inventory     : Check your items");
+        System.out.println("- help          : Show all commands");
+        System.out.println("- quit          : Exit the game");
+    }
+
+    /**
      * Main game loop that handles player input and game state updates.
      * Continues until the player dies or exits the game.
      */
     private void runGameLoop() {
         isGameRunning = true;
+        String input = getValidatedInput(); // Get first input after welcome message
+        processCommand(input);              // Process first command
+
         while (isGameRunning && player.isAlive()) {
             try {
                 promptAction();
-                String input = getValidatedInput();
+                input = getValidatedInput();
                 processCommand(input);
             } catch (Exception e) {
                 System.out.println("Invalid input: " + e.getMessage());
@@ -181,6 +243,7 @@ public class Game {
      * Prompts the player for their next action.
      */
     private void promptAction() {
+        displayAvailableCommands(false);
         System.out.println("\nWhat would you like to do?");
     }
 

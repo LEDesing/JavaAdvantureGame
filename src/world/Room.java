@@ -153,8 +153,13 @@ public class Room {
      * @return The enemy, or null if not found
      */
     public Enemy findEnemy(String name) {
+        String searchName = name.toLowerCase().trim();
         for (Enemy enemy : enemies) {
-            if (enemy.getCharacterName().equalsIgnoreCase(name)) {
+            String enemyName = enemy.getCharacterName().toLowerCase();
+            // Check for exact match or partial match
+            if (enemyName.equals(searchName) ||
+                    enemyName.contains(searchName) ||
+                    searchName.contains(enemyName)) {
                 return enemy;
             }
         }
@@ -208,4 +213,45 @@ public class Room {
     public Map<Direction, Room> getExits() {
         return new HashMap<>(exits);
     }
+
+    /**
+     * Displays information about attackable enemies in this room
+     * @return String containing the formatted enemy information
+     */
+    public String getAttackableEnemiesInfo() {
+        StringBuilder info = new StringBuilder();
+
+        if (hasEnemies()) {
+            info.append("\nEnemies you can attack:");
+            for (Enemy enemy : enemies) {
+                info.append(String.format("\n- %s (%d/%d HP)",
+                        enemy.getCharacterName(),
+                        enemy.getCurrentHealthPoints(),
+                        enemy.getMaxHealthPoints()));
+            }
+        } else {
+            info.append("There are no enemies here to attack.");
+        }
+
+        return info.toString();
+    }
+
+    /**
+     * Creates a new exit in the specified direction
+     * @param direction Direction of the new exit
+     * @param room The room to connect to
+     */
+    public void addExit(Direction direction, Room room) {
+        exits.put(direction, room);
+    }
+
+    /**
+     * Checks if room is cleared and should generate next area
+     * @return true if room is cleared and needs next area
+     */
+    public boolean needsNextArea() {
+        return isCleared && !exits.containsKey(Direction.NORTH);
+    }
+
+
 }

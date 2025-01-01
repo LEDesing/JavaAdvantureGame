@@ -5,42 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9f9e9e06-1b4b-49f7-9f2a-afa505690fa5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/character/Character.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/ability/Ability.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/ability/AbilityType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/enemy/Enemy.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/enemy/EnemyType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/player/HeroClass.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/character/player/Player.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/combat/CombatLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/combat/CombatResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/combat/CombatSystem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/command/CommandProcessor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/command/CommandSuggester.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/items/Inventory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/items/Item.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/items/ItemsType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/utils/UserInput.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/world/DungeonProgress.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/world/generator/DungeonGeneration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JavaAdventureGame.iml" beforeDir="false" afterPath="$PROJECT_DIR$/JavaAdventureGame.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/GameCharacter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/character/CharacterClass.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/character/Character.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/character/Character.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/combat/CombatSystem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/combat/CombatSystem.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/command/Command.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/command/Command.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/command/CommandProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/command/CommandProcessor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/command/CommandSuggester.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game/Game.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/Game.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/game/GameController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/InputValidator.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/world/Direction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/Direction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/UserInput.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/UserInput.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/world/DungeonProgress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/DungeonProgress.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/Room.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/Room.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/world/RoomDescription.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/RoomDescription.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/RoomType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/RoomType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/world/generator/DungeonGeneration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/generator/DungeonGeneration.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +37,9 @@
   &quot;associatedIndex&quot;: 5
 }</component>
   <component name="ProjectId" id="2qYcLz174clRiIsf7Y0WZSrBHcD" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />

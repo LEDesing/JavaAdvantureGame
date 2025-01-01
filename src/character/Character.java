@@ -45,9 +45,7 @@ public abstract class Character {
     public void receiveAttackDamage(int incomingDamage) {
         if (incomingDamage > 0) {
             currentHealth = Math.max(0, currentHealth - incomingDamage);
-            System.out.printf("%s takes %d damage! (%d/%d HP)%n",
-                    name, incomingDamage, currentHealth, maxHealthPoints);
-
+            // Remove redundant damage message here
             if (!isAlive()) {
                 System.out.printf("%s has been defeated!%n", name);
             }

@@ -3,8 +3,14 @@ package world;
 import java.util.Random;
 
 /**
- * Tracks player's progress through the dungeon.
- * Controls boss spawning based on player depth and previous encounters.
+ * Tracks player's progress through the dungeon sections and boss encounters.
+ * This class manages the player's journey through the Labyrinth of VUB,
+ * controlling boss spawning based on player depth and previous encounters.
+ * 
+ * The dungeon is divided into three main sections:
+ * - Fire Section (First Boss: Flame Warden)
+ * - Ice Section (Second Boss: Frost Sentinel)
+ * - Shadow Section (Final Boss: Shadow Lord)
  */
 public class DungeonProgress {
     // Depth requirements
@@ -29,7 +35,9 @@ public class DungeonProgress {
     }
 
     /**
-     * Moves player deeper into dungeon
+     * Moves player deeper into the labyrinth. Movement is tracked to determine
+     * which section of the dungeon the player is in (Fire, Ice, or Shadow).
+     * 
      * @return New depth after movement
      */
     public int moveDeeper() {
@@ -48,7 +56,10 @@ public class DungeonProgress {
     }
 
     /**
-     * Checks if first mini-boss can spawn here
+     * Checks if the Flame Warden (first boss) can spawn at current location.
+     * The Flame Warden guards the first key piece in the Fire Section.
+     * 
+     * @return true if spawn conditions are met, false otherwise
      */
     public boolean canSpawnFirstBoss() {
         return !firstBossDefeated &&

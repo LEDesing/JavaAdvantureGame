@@ -1,3 +1,4 @@
+// RoomType.java
 package world;
 
 /**
@@ -31,9 +32,9 @@ public enum RoomType {
     private final String description;
 
     /**
-     * Creates a new room type
-     * @param name Display name of the room
-     * @param description Room description (null for random description)
+     * Creates a new room type.
+     * @param name Display name of the room.
+     * @param description Room description (null for random description).
      */
     RoomType(String name, String description) {
         this.name = name;
@@ -41,8 +42,8 @@ public enum RoomType {
     }
 
     /**
-     * Gets room description
-     * @return Fixed description or random one for normal rooms
+     * Gets room description.
+     * @return Fixed description or random one for normal rooms.
      */
     public String getDescription() {
         if (this == NORMAL) {
@@ -52,28 +53,32 @@ public enum RoomType {
     }
 
     /**
-     * Gets room display name
+     * Gets room display name.
+     * @return The display name of the room.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Checks if this is a special room type
+     * Checks if this is a special room type.
+     * @return True if the room is special, false otherwise.
      */
     public boolean isSpecialRoom() {
         return this != NORMAL;
     }
 
     /**
-     * Checks if enemies can spawn here
+     * Checks if enemies can spawn here.
+     * @return True if enemies can spawn, false otherwise.
      */
     public boolean canHaveEnemies() {
         return this != HOME && this != ENTRANCE;
     }
 
     /**
-     * Checks if items can spawn here
+     * Checks if items can spawn here.
+     * @return True if items can spawn, false otherwise.
      */
     public boolean canHaveItems() {
         return this != ENTRANCE;
