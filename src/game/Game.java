@@ -155,28 +155,37 @@ public class Game {
 
 
     /**
-     * Shows the player what commands they can use right now.
-     * Different commands are shown based on where the player is and what's in the room.
+     * Shows the player what they can do right now.
+     * Different options appear based on where they are and what they can see.
      *
-     * @param isInitial true if player is in starting room, false otherwise
+     * @param isInitial true if player is at the start, false if they moved
      */
     private void displayAvailableCommands(boolean isInitial) {
         System.out.println("\nAvailable commands:");
 
         if (isInitial) {
-            // Initial commands only
+            // At the start, you can only go into the dungeon
             System.out.println("- move north    : Enter the dungeon");
         } else {
-            // Movement commands
+            // Show which ways you can walk
             for (Direction dir : currentRoom.getExits().keySet()) {
-                System.out.printf("- move %-8s: Move to next room%n", dir.name().toLowerCase());
+                // Give more descriptive movement information
+                String moveDescription;
+                if (dir == Direction.NORTH) {
+                    moveDescription = "Go deeper into the dungeon";
+                } else if (dir == Direction.SOUTH) {
+                    moveDescription = "Return to previous room";
+                } else {
+                    moveDescription = "Move to next room";
+                }
+                System.out.printf("- move %-8s: %s%n", dir.name().toLowerCase(), moveDescription);
             }
 
-            // Contextual commands
+            // Show what you can do in this room
             if (currentRoom.hasEnemies()) {
                 System.out.println("- attack <name> : Attack an enemy");
 
-                // Show ability info with cooldown
+                // Show your special power and when you can use it again
                 Ability ability = player.getSpecialAbility();
                 String cooldownInfo = ability.getCurrentCooldown() > 0 ?
                         String.format(" (Cooldown: %d)", ability.getCurrentCooldown()) : "";
@@ -188,9 +197,13 @@ public class Game {
             if (currentRoom.hasItems()) {
                 System.out.println("- take <item>   : Pick up an item");
             }
+            // Show if you can use items from your bag
+            if (player.getInventory().hasItems()) {
+                System.out.println("- use <item>    : Use an item from inventory");
+            }
         }
 
-        // Always available commands
+        // Things you can always do
         System.out.println("- look          : Examine your surroundings");
         System.out.println("- inventory     : Check your items");
         System.out.println("- help          : Show all commands");

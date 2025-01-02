@@ -1,4 +1,3 @@
-// DungeonGeneration.java
 package world.generator;
 
 import character.enemy.Enemy;
@@ -14,13 +13,20 @@ import java.util.Random;
 
 /**
  * Creates and connects dungeon rooms.
- * Controls what appears in each room.
+ * The dungeon follows a fixed structure:
+ * 1. Home -> Entrance -> Normal Room
+ * 2. First Boss (Flame Warden)
+ * 3. Two rooms (Normal/Treasure)
+ * 4. Second Boss (Frost Sentinel)
+ * 5. Two rooms (Normal/Treasure)
+ * 6. Final Boss (Shadow Lord)
  */
 public class DungeonGeneration {
-    private static final double TREASURE_ROOM_CHANCE = 0.20;
+    private static final double TREASURE_ROOM_CHANCE = 0.40;
     private static final double ITEM_SPAWN_CHANCE = 0.65;
     private static final int MAX_ITEMS_PER_ROOM = 2;
     private static final int MAX_ENEMIES_PER_ROOM = 2;
+    private static final int ROOMS_BEFORE_FIRST_BOSS = 1;
 
     private final DungeonProgress progress;
     private final Random random;
@@ -44,6 +50,7 @@ public class DungeonGeneration {
         connectRooms(home, entrance, Direction.NORTH);
         connectRooms(entrance, firstDungeonRoom, Direction.NORTH);
 
+        // Give player a starting health potion
         entrance.addItem(new Item(
                 ItemsType.HEALTH_POTION.getDisplayName(ItemsType.HEALTH_POTION.getBasicPower()),
                 ItemsType.HEALTH_POTION,
@@ -59,65 +66,40 @@ public class DungeonGeneration {
      * Creates a new room when player goes deeper.
      */
     public Room generateNextRoom() {
-        try {
-            RoomType type = determineNextRoomType();
-            Room room = new Room(type);
-            populateRoom(room);
+        progress.moveDeeper();
 
-            // If this is a treasure room, we should still allow forward progress
-            if (type == RoomType.TREASURE) {
-                Room nextRoom = new Room(RoomType.NORMAL);
-                populateRoom(nextRoom);
-                connectRooms(room, nextRoom, Direction.NORTH);
-            }
+        RoomType type = determineNextRoomType();
+        Room room = new Room(type);
+        populateRoom(room);
 
-            lastGeneratedRoom = room;
-            return room;
-        } catch (Exception e) {
-            System.err.println("Error generating room: " + e.getMessage());
-            return new Room(RoomType.NORMAL);
+        // If this is a treasure room and we're not at max depth,
+        // ensure there's a path forward
+        if (type == RoomType.TREASURE && progress.canGenerateNextRoom()) {
+            Room nextRoom = new Room(RoomType.NORMAL);
+            populateRoom(nextRoom);
+            connectRooms(room, nextRoom, Direction.NORTH);
         }
+
+        lastGeneratedRoom = room;
+        return room;
     }
 
     /**
-     * Connects a new room to the north of the current room.
-     * @param currentRoom The room the player is currently in.
-     * @return The newly connected room.
-     */
-    public Room connectNewRoomNorth(Room currentRoom) {
-        if (currentRoom == null) {
-            throw new IllegalArgumentException("Current room cannot be null");
-        }
-
-        // If room already has a north exit, use that
-        if (currentRoom.hasExit(Direction.NORTH)) {
-            return currentRoom.getExit(Direction.NORTH);
-        }
-
-        // Only generate new room if current room is cleared
-        if (currentRoom.isCleared()) {
-            Room newRoom = generateNextRoom();
-            connectRooms(currentRoom, newRoom, Direction.NORTH);
-            return newRoom;
-        }
-
-        return null;
-    }
-
-    /**
-     * Decides what type the next room should be.
+     * Decides what type the next room should be based on progression.
      */
     private RoomType determineNextRoomType() {
-        if (progress.canSpawnFinalBoss()) {
-            return RoomType.BOSS;
+        // Force normal combat room before first boss
+        if (!progress.isFirstBossDefeated() &&
+                progress.getCurrentDepth() == ROOMS_BEFORE_FIRST_BOSS) {
+            return RoomType.NORMAL;
         }
-        if (progress.canSpawnSecondBoss()) {
-            return RoomType.BOSS;
-        }
-        if (progress.canSpawnFirstBoss()) {
+
+        // Check for boss rooms at appropriate depths
+        if (progress.shouldSpawnBoss()) {
             return RoomType.BOSS;
         }
 
+        // Between bosses, chance for treasure rooms
         if (random.nextDouble() < TREASURE_ROOM_CHANCE) {
             return RoomType.TREASURE;
         }
@@ -126,12 +108,11 @@ public class DungeonGeneration {
     }
 
     /**
-     * Adds enemies and items to a room.
+     * Adds appropriate contents to a room based on its type.
      */
     private void populateRoom(Room room) {
         switch (room.getType()) {
             case HOME:
-                break;
             case ENTRANCE:
                 break;
             case TREASURE:
@@ -150,21 +131,20 @@ public class DungeonGeneration {
     }
 
     /**
-     * Adds a boss enemy based on progress.
+     * Adds the appropriate boss based on progression.
      */
     private void addBossToRoom(Room room) {
-        Enemy boss;
-        if (!progress.isFirstBossDefeated()) {
-            boss = new Enemy("Flame Warden", EnemyType.FLAME_WARDEN, true);
-        } else if (!progress.isSecondBossDefeated()) {
-            boss = new Enemy("Frost Sentinel", EnemyType.FROST_SENTINEL, true);
-        } else {
-            boss = new Enemy("Shadow Lord", EnemyType.SHADOW_LORD, true);
+        EnemyType bossType = progress.getCurrentBossType();
+        if (bossType == null) {
+            throw new IllegalStateException("Tried to create boss room without valid boss type");
         }
-        room.addEnemy(boss);
 
-        addTreasureToRoom(room);
+        Enemy boss = new Enemy(bossType.getName(), bossType, true);
+        room.addEnemy(boss);
+        addTreasureToRoom(room); // Boss rooms always have treasure
     }
+
+
 
     /**
      * Adds valuable items to a room.
@@ -181,8 +161,16 @@ public class DungeonGeneration {
      * Adds normal enemies to a room.
      */
     private void addRegularEnemies(Room room) {
-        int enemyCount = random.nextInt(MAX_ENEMIES_PER_ROOM) + 1;
+        // Force single weak enemy for the first combat room
+        if (!progress.isFirstBossDefeated() &&
+                progress.getCurrentDepth() == ROOMS_BEFORE_FIRST_BOSS) {
+            Enemy enemy = new Enemy("Goblin Trainee", EnemyType.GOBLIN, false);
+            room.addEnemy(enemy);
+            return;
+        }
 
+        // Normal enemy generation for other rooms
+        int enemyCount = random.nextInt(MAX_ENEMIES_PER_ROOM) + 1;
         for (int i = 0; i < enemyCount; i++) {
             EnemyType type = getRandomEnemyType();
             String enemyName = type.getName() + " " + (i + 1);

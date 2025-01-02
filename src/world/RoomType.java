@@ -2,8 +2,8 @@
 package world;
 
 /**
- * Defines the different types of rooms in the game.
- * Each room type has its own name and description.
+ * A list of all the different room types in the game.
+ * Each room has a name and a description.
  */
 public enum RoomType {
     HOME("Home",
@@ -32,9 +32,9 @@ public enum RoomType {
     private final String description;
 
     /**
-     * Creates a new room type.
-     * @param name Display name of the room.
-     * @param description Room description (null for random description).
+     * Makes a new room type.
+     * @param name The name shown for the room
+     * @param description What the room looks like (can be null for normal rooms)
      */
     RoomType(String name, String description) {
         this.name = name;
@@ -42,8 +42,8 @@ public enum RoomType {
     }
 
     /**
-     * Gets room description.
-     * @return Fixed description or random one for normal rooms.
+     * Gets the room's description.
+     * @return The room's description (random for normal rooms)
      */
     public String getDescription() {
         if (this == NORMAL) {
@@ -53,32 +53,32 @@ public enum RoomType {
     }
 
     /**
-     * Gets room display name.
-     * @return The display name of the room.
+     * Gets the room's name.
+     * @return The name of the room
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Checks if this is a special room type.
-     * @return True if the room is special, false otherwise.
+     * Checks if this is a special room.
+     * @return true if it's special, false if it's normal
      */
     public boolean isSpecialRoom() {
         return this != NORMAL;
     }
 
     /**
-     * Checks if enemies can spawn here.
-     * @return True if enemies can spawn, false otherwise.
+     * Checks if enemies can appear in this room.
+     * @return true if enemies can appear, false if they can't
      */
     public boolean canHaveEnemies() {
         return this != HOME && this != ENTRANCE;
     }
 
     /**
-     * Checks if items can spawn here.
-     * @return True if items can spawn, false otherwise.
+     * Checks if items can appear in this room.
+     * @return true if items can appear, false if they can't
      */
     public boolean canHaveItems() {
         return this != ENTRANCE;

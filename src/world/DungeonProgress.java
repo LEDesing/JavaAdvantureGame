@@ -1,115 +1,140 @@
 package world;
 
-import java.util.Random;
+import character.enemy.EnemyType;
 
 /**
- * Tracks player's progress through the dungeon sections and boss encounters.
- * This class manages the player's journey through the Labyrinth of VUB,
- * controlling boss spawning based on player depth and previous encounters.
- * 
- * The dungeon is divided into three main sections:
- * - Fire Section (First Boss: Flame Warden)
- * - Ice Section (Second Boss: Frost Sentinel)
- * - Shadow Section (Final Boss: Shadow Lord)
+ * Controls the player's journey through the dungeon.
+ * The dungeon has a fixed structure:
+ * 1. Home -> Entrance -> Normal Room
+ * 2. First Boss (Flame Warden)
+ * 3. Two rooms (Normal/Treasure)
+ * 4. Second Boss (Frost Sentinel)
+ * 5. Two rooms (Normal/Treasure)
+ * 6. Final Boss (Shadow Lord)
  */
 public class DungeonProgress {
-    // Depth requirements
-    private static final int FIRST_BOSS_MIN_DEPTH = 5;
-    private static final int SECOND_BOSS_MIN_DEPTH = 10;
-    private static final int FINAL_BOSS_MIN_DEPTH = 15;
+    // Room sequence constants
+    private static final int ROOMS_BEFORE_FIRST_BOSS = 1;
+    private static final int ROOMS_BETWEEN_BOSSES = 2;
 
-    // Spawn chances
-    private static final double MINI_BOSS_SPAWN_CHANCE = 0.20;
-    private static final double FINAL_BOSS_SPAWN_CHANCE = 0.30;
+    // Boss depths (fixed positions)
+    private static final int FIRST_BOSS_DEPTH = 2;   // After entrance + 1 room
+    private static final int SECOND_BOSS_DEPTH = 5;  // After 2 more rooms
+    private static final int FINAL_BOSS_DEPTH = 8;   // After 2 final rooms
 
-    private final Random random;
     private int currentDepth;
+    private int roomsSinceLastBoss;
     private boolean firstBossDefeated;
     private boolean secondBossDefeated;
+    private boolean finalBossDefeated;
 
+    /**
+     * Creates a new dungeon progress tracker
+     */
     public DungeonProgress() {
-        this.random = new Random();
         this.currentDepth = 0;
+        this.roomsSinceLastBoss = 0;
         this.firstBossDefeated = false;
         this.secondBossDefeated = false;
+        this.finalBossDefeated = false;
     }
 
     /**
-     * Moves player deeper into the labyrinth. Movement is tracked to determine
-     * which section of the dungeon the player is in (Fire, Ice, or Shadow).
-     * 
-     * @return New depth after movement
+     * Moves player one room deeper into the dungeon
+     * @return The new depth
      */
     public int moveDeeper() {
-        return ++currentDepth;
+        currentDepth++;
+        roomsSinceLastBoss++;
+        return currentDepth;
     }
 
     /**
-     * Moves player back towards entrance
-     * @return New depth after movement
+     * Checks if the next room should be a boss room
+     * @return true if a boss should appear
      */
-    public int moveBack() {
-        if (currentDepth > 0) {
-            currentDepth--;
+    public boolean shouldSpawnBoss() {
+        if (!firstBossDefeated && currentDepth == FIRST_BOSS_DEPTH) {
+            return true;
         }
-        return currentDepth;
+        if (firstBossDefeated && !secondBossDefeated &&
+                currentDepth == SECOND_BOSS_DEPTH) {
+            return true;
+        }
+        if (secondBossDefeated && !finalBossDefeated &&
+                currentDepth == FINAL_BOSS_DEPTH) {
+            return true;
+        }
+        return false;
     }
 
     /**
-     * Checks if the Flame Warden (first boss) can spawn at current location.
-     * The Flame Warden guards the first key piece in the Fire Section.
-     * 
-     * @return true if spawn conditions are met, false otherwise
+     * Gets which boss should appear next
+     * @return The type of boss to spawn, or null if no boss should spawn
      */
-    public boolean canSpawnFirstBoss() {
-        return !firstBossDefeated &&
-                currentDepth >= FIRST_BOSS_MIN_DEPTH &&
-                random.nextDouble() < MINI_BOSS_SPAWN_CHANCE;
+    public EnemyType getCurrentBossType() {
+        if (!firstBossDefeated && currentDepth == FIRST_BOSS_DEPTH) {
+            return EnemyType.FLAME_WARDEN;
+        }
+        if (firstBossDefeated && !secondBossDefeated &&
+                currentDepth == SECOND_BOSS_DEPTH) {
+            return EnemyType.FROST_SENTINEL;
+        }
+        if (secondBossDefeated && !finalBossDefeated &&
+                currentDepth == FINAL_BOSS_DEPTH) {
+            return EnemyType.SHADOW_LORD;
+        }
+        return null;
     }
 
     /**
-     * Checks if second mini-boss can spawn here
+     * Records that a boss was defeated
+     * @param bossType The type of boss that was defeated
      */
-    public boolean canSpawnSecondBoss() {
-        return firstBossDefeated &&
-                !secondBossDefeated &&
-                currentDepth >= SECOND_BOSS_MIN_DEPTH &&
-                random.nextDouble() < MINI_BOSS_SPAWN_CHANCE;
+    public void recordBossDefeat(EnemyType bossType) {
+        switch (bossType) {
+            case FLAME_WARDEN:
+                firstBossDefeated = true;
+                break;
+            case FROST_SENTINEL:
+                secondBossDefeated = true;
+                break;
+            case SHADOW_LORD:
+                finalBossDefeated = true;
+                break;
+            default:
+                throw new IllegalArgumentException("Not a boss type: " + bossType);
+        }
+        roomsSinceLastBoss = 0;
     }
 
     /**
-     * Checks if final boss can spawn here
+     * Checks if more rooms can be generated
+     * @return true if dungeon continues, false if at the end
      */
-    public boolean canSpawnFinalBoss() {
-        return firstBossDefeated &&
-                secondBossDefeated &&
-                currentDepth >= FINAL_BOSS_MIN_DEPTH &&
-                random.nextDouble() < FINAL_BOSS_SPAWN_CHANCE;
+    public boolean canGenerateNextRoom() {
+        return currentDepth < FINAL_BOSS_DEPTH ||
+                (currentDepth == FINAL_BOSS_DEPTH && !finalBossDefeated);
     }
 
     /**
-     * Records defeat of first boss
+     * Gets the current section of the dungeon
+     * @return Description of current area
      */
-    public void defeatFirstBoss() {
-        firstBossDefeated = true;
+    public String getCurrentSection() {
+        if (!firstBossDefeated) {
+            return "Fire Section";
+        } else if (!secondBossDefeated) {
+            return "Ice Section";
+        } else {
+            return "Shadow Section";
+        }
     }
 
-    /**
-     * Records defeat of second boss
-     */
-    public void defeatSecondBoss() {
-        secondBossDefeated = true;
-    }
-
-    public int getCurrentDepth() {
-        return currentDepth;
-    }
-
-    public boolean isFirstBossDefeated() {
-        return firstBossDefeated;
-    }
-
-    public boolean isSecondBossDefeated() {
-        return secondBossDefeated;
-    }
+    // Getters
+    public int getCurrentDepth() { return currentDepth; }
+    public boolean isFirstBossDefeated() { return firstBossDefeated; }
+    public boolean isSecondBossDefeated() { return secondBossDefeated; }
+    public boolean isFinalBossDefeated() { return finalBossDefeated; }
+    public int getRoomsSinceLastBoss() { return roomsSinceLastBoss; }
 }

@@ -55,6 +55,14 @@ public class Player extends Character {
     }
 
     /**
+     * Checks if player is currently invisible/dodging
+     * @return true if player will dodge next attack
+     */
+    public boolean isInvisible() {
+        return canDodgeNextAttack;
+    }
+
+    /**
      * Gets better (heals health)
      * @param amount How much health to get back
      */

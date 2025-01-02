@@ -6,13 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="9f9e9e06-1b4b-49f7-9f2a-afa505690fa5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/character/Character.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/character/Character.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/character/ability/Ability.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/character/ability/Ability.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/character/enemy/Enemy.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/character/enemy/Enemy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/character/player/Player.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/character/player/Player.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/combat/CombatSystem.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/combat/CombatSystem.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/command/Command.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/command/Command.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/command/CommandProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/command/CommandProcessor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/command/CommandSuggester.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game/Game.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/game/Game.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/UserInput.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/UserInput.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/DungeonProgress.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/DungeonProgress.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/Room.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/Room.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/world/RoomType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/world/RoomType.java" afterDir="false" />

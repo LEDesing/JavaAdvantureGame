@@ -9,6 +9,7 @@ public class Ability {
     private final int cooldown;
     private int currentCooldown;
 
+
     public Ability(String name, String description, AbilityType type, int cooldown) {
         this.name = name;
         this.description = description;
@@ -24,6 +25,9 @@ public class Ability {
         }
 
         type.execute(user, target);
+    }
+
+    public void startCooldown() {
         currentCooldown = cooldown;
     }
 
@@ -31,6 +35,10 @@ public class Ability {
         if (currentCooldown > 0) {
             currentCooldown--;
         }
+    }
+
+    public AbilityType getType() {
+        return type;
     }
 
     // Getters

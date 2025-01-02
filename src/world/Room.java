@@ -129,19 +129,23 @@ public class Room {
     }
 
     /**
-     * Adds an enemy to the room
+     * Adds an enemy to the room and sets the enemy's location
      * @param enemy Enemy to add
      */
     public void addEnemy(Enemy enemy) {
         enemies.add(enemy);
+        enemy.setCurrentRoom(this);  // Set this room as enemy's current location
     }
 
     /**
-     * Removes an enemy from the room
+     * Removes an enemy from the room and clears its location
      * @param enemy Enemy to remove
      */
     public void removeEnemy(Enemy enemy) {
         enemies.remove(enemy);
+        enemy.setCurrentRoom(null);  // Clear enemy's room reference
+
+        // Check if room is cleared
         if (enemies.isEmpty()) {
             isCleared = true;
         }
@@ -219,21 +223,18 @@ public class Room {
      * @return String containing the formatted enemy information
      */
     public String getAttackableEnemiesInfo() {
-        StringBuilder info = new StringBuilder();
-
-        if (hasEnemies()) {
-            info.append("\nEnemies you can attack:");
-            for (Enemy enemy : enemies) {
-                info.append(String.format("\n- %s (%d/%d HP)",
-                        enemy.getCharacterName(),
-                        enemy.getCurrentHealthPoints(),
-                        enemy.getMaxHealthPoints()));
-            }
-        } else {
-            info.append("There are no enemies here to attack.");
+        if (!hasEnemies()) {
+            return "There are no enemies here to attack.";
         }
 
-        return info.toString();
+        String info = "\nEnemies you can attack:";
+        for (Enemy enemy : enemies) {
+            info = info + "\n- " + enemy.getCharacterName() +
+                    " (" + enemy.getCurrentHealthPoints() + "/" +
+                    enemy.getMaxHealthPoints() + " HP)";
+        }
+
+        return info;
     }
 
     /**
@@ -252,6 +253,8 @@ public class Room {
     public boolean needsNextArea() {
         return isCleared && !exits.containsKey(Direction.NORTH);
     }
+
+
 
 
 }
